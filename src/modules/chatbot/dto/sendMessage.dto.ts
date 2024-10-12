@@ -11,4 +11,6 @@ export class SendMessageDto {
     @IsString()
     @Type(() => String)
     text: string;
+
+    clientId:string
 }

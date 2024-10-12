@@ -14,14 +14,10 @@ export class GlobalWebSocketGateway {
     server: Server;
 
      emit(event:string,message: any,client: Socket) {
-         console.log('Available connected clients:', this.server.sockets.sockets.keys());
-         client.emit(event, message);
+          client.emit(event, message);
     }
 
      sendMessageToClient(clientId: string,event:string, message: any) {
-         console.log("sendMessageToClient ",{clientId})
-         console.log('Available connected clients:', this.server.sockets.sockets.keys());
-
          this.server.to(clientId).emit(event, message);
     }
 }

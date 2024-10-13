@@ -5,6 +5,7 @@ import {AgentGateway} from "./gateways/agent.gateway";
 import {ChatbotGateway} from "./gateways/chatbot.gateway";
 import {MessageService} from "./services/message.service";
 import {ChatbotController} from "./controllers/chatbot.controller";
+import {AgentRoomsService} from "./services/agent-rooms.service";
 
 
 @Module({
@@ -12,6 +13,6 @@ import {ChatbotController} from "./controllers/chatbot.controller";
 
     ],
     controllers:[ChatbotController],
-    providers: [ChatbotService,DatabaseService,AgentGateway,ChatbotGateway,MessageService],
+    providers: [ChatbotService,DatabaseService,AgentGateway,ChatbotGateway,MessageService,AgentRoomsService],
 })
 export class ChatbotModule {}

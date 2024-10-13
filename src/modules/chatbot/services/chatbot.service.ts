@@ -2,13 +2,13 @@ import {Injectable} from '@nestjs/common';
 import {DatabaseService} from "../../../config/database.config";
 import {SendMessageDto} from "../dto/sendMessage.dto";
 import {MessageService} from "./message.service";
+import {AgentRoomsService} from "./agent-rooms.service";
+import {RedisKeys} from "../consts/redis-keys";
 
 @Injectable()
 export class ChatbotService {
-    private agentAvailable = false;
-    private agentSocketId = null;
 
-    constructor(private dbService: DatabaseService,private messageService:MessageService) {
+    constructor(private dbService: DatabaseService,private messageService:MessageService,private agentRoomsService:AgentRoomsService) {
     }
 
     async processMessage(message: SendMessageDto, clientSocketId: string): Promise<any> {
@@ -22,14 +22,28 @@ export class ChatbotService {
         if (answer) {
             return {isAgentConnected: false, answer: answer.answer};
         }
+        //already joined to room
+        let roomDoc=await this.agentRoomsService.getUserRoom(message.clientId,RedisKeys.UserRoomId)
+            console.log("processMessage",{roomDoc})
+        if (roomDoc){
+            return {
+                isAgentConnected: true,
+                answer: `Agent is responding to: ${message.text}`,
+                roomId: roomDoc.roomId,
+                agentSocketId:roomDoc.agentSocketId,
+            };
+        }
 
         // Check if the agent is available
-        if (this.agentAvailable) {
+        let agentDoc=await this.agentRoomsService.getAvailableAgent()
+        if (agentDoc) {
+            const roomKey=await this.agentRoomsService.assignUserToRoom(message.clientId,agentDoc.agentId)
             // Agent is available, forward the message to the agent
             return {
                 isAgentConnected: true,
                 answer: `Agent is responding to: ${message.text}`,
-                agentSocketId: this.agentSocketId,
+                roomId: roomKey,
+                agentSocketId:agentDoc.agentSocketId
             };
         }
 
@@ -39,17 +53,5 @@ export class ChatbotService {
             answer: "I don't know the answer to that. Let me connect you to an agent."
         };
 
-    }
-
-    // Method to connect an agent to a client
-    connectAgentToClient(agentSocketId: string) {
-        this.agentAvailable = true;
-        this.agentSocketId = agentSocketId;
-    }
-
-    // Method to disconnect agent
-    disconnectAgent() {
-        this.agentAvailable = false;
-        this.agentSocketId = null;
     }
 }

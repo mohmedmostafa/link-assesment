@@ -4,6 +4,7 @@ class UserRoomHandler {
     constructor(private redisClient: any) {}
 
     async getRoomData(userId: string) {
+        console.log({key:`${RedisKeys.User}:${userId}`})
         const roomId = await this.redisClient.hGet(`${RedisKeys.User}:${userId}`, `${RedisKeys.UserRoomId}:${userId}`);
         console.log("RoomHandler", { roomId, KEY: `${RedisKeys.User}:${userId}` });
 
@@ -20,6 +21,7 @@ class AgentRoomHandler {
     constructor(private redisClient: any) {}
 
     async getRoomData(agentId: string) {
+        console.log({key:`${RedisKeys.Agent}:${agentId}`})
         const roomId = await this.redisClient.hGet(`${RedisKeys.Agent}:${agentId}`, `${RedisKeys.AgentRoomId}:${agentId}`);
         console.log("AgentRoomHandler", { roomId, KEY: `${RedisKeys.Agent}:${agentId}` });
 

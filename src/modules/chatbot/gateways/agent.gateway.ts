@@ -19,7 +19,7 @@ export class AgentGateway {
 
     @SubscribeMessage('agentMessage')
     async handleAgentMessage(@MessageBody() message: any,@ConnectedSocket() client: Socket) {
-        let roomDoc=await this.agentRoomsService.getUserRoom(message.myId,RedisKeys.AgentRoomId)
+        let roomDoc=await this.agentRoomsService.getUserRoom(message.myId,RedisKeys.Agent)
         console.log("processMessage",{roomDoc})
         if (!roomDoc){
             return {

@@ -11,23 +11,21 @@ export class ChatbotGateway {
     constructor(private chatbotService: ChatbotService, private globalWebSocketGateway: GlobalWebSocketGateway, private agentRoomsService: AgentRoomsService) {
     }
 
-    myId = "670991506145238731571b42"
 
     @SubscribeMessage('userConnect')
     async handleAgentConnect(@MessageBody() message: any, @ConnectedSocket() client: Socket) {
 
-        await this.agentRoomsService.connectUserToClient(client.id, this.myId);
+        await this.agentRoomsService.connectUserToClient(client.id, message.clientId);
         this.globalWebSocketGateway.emit('userConnected', {message: `You are now connected as an user. -> id:${client.id}`}, client);
     }
 
 
     @SubscribeMessage('message')
     async handleMessage(@MessageBody(new ValidationPipe({transform: true})) messagePayload: SendMessageDto, @ConnectedSocket() client: Socket) {
-        messagePayload.clientId = this.myId //todo: replace this id by auth user id
         const response = await this.chatbotService.processMessage(messagePayload, client.id);
         console.log("handleMessage", {response})
         if (response.isAgentConnected) {
-            this.globalWebSocketGateway.server.sockets.sockets.get(response.agentSocketId).join(response.roomId)
+            this.globalWebSocketGateway.server.sockets.sockets.get(response.agentSocketId)?.join(response.roomId)
             client.join(response.roomId)
             this.globalWebSocketGateway.emitToRoom(response.roomId, 'message', {message: messagePayload.text}, client);
         } else {

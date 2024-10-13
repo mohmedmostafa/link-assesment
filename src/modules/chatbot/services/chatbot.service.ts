@@ -22,7 +22,7 @@ export class ChatbotService {
             return {isAgentConnected: false, answer: answer.answer};
         }
         //already joined to room
-        let roomDoc=await this.agentRoomsService.getUserRoom(message.clientId,RedisKeys.UserRoomId)
+        let roomDoc=await this.agentRoomsService.getUserRoom(message.clientId,RedisKeys.User)
             console.log("processMessage",{roomDoc})
         if (roomDoc){
             return {

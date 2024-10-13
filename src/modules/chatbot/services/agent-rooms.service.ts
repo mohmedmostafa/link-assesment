@@ -1,12 +1,12 @@
 import {Inject, Injectable} from "@nestjs/common";
 import {RedisClientType} from "redis";
 import {RedisKeys} from "../consts/redis-keys";
+import {RoomHandlerFactory} from "./handlers/room.handler";
 
 @Injectable()
 export class AgentRoomsService {
     constructor(@Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType) {
     }
-
 
     /**
      *
@@ -22,6 +22,7 @@ export class AgentRoomsService {
             await this.redisClient.sAdd(RedisKeys.AvailableAgents, agentId);
         } catch (e) {
             console.log(e)
+            return null;
         }
 
     }
@@ -34,6 +35,7 @@ export class AgentRoomsService {
             await this.redisClient.hSet(userKey, RedisKeys.AgentSocketId, userSocketId);
         } catch (e) {
             console.log(e)
+            return null;
         }
 
     }
@@ -45,9 +47,10 @@ export class AgentRoomsService {
 
             // Update hash values
             await this.redisClient.del(agentKey);
-            await this.redisClient.sAdd(RedisKeys.AvailableAgents, agentId);
+            await this.redisClient.sRem(RedisKeys.AvailableAgents, agentId);
         } catch (e) {
             console.log(e)
+            return null;
         }
     }
 
@@ -66,50 +69,62 @@ export class AgentRoomsService {
             }
         } catch (e) {
             console.log(e)
+            return null;
         }
     }
 
     async assignUserToRoom(userId: string, agentId: string) {
         try {
             const roomId = `${userId}-${agentId}`
-            // const roomKey = `${RedisKeys.Room}:${roomId}`;
-            // console.log("assignUserToRoom", {userId, agentId})
-            // // @ts-ignore
-            // await this.redisClient.HSET(roomKey, RedisKeys.AgentId, agentId);
 
             // Add room to sets for quick search by userId or agentId
-            await this.redisClient.set(`${RedisKeys.UserRoomId}:${userId}`, roomId);
-            await this.redisClient.set(`${RedisKeys.AgentRoomId}:${agentId}`, roomId);
-            console.log(`Room ${roomId} created for User ${userId} and Agent ${agentId}`);
+            const userKey = `${RedisKeys.User}:${userId}`;
+            const agentKey = `${RedisKeys.Agent}:${agentId}`;
+
+            await this.redisClient.hSet(userKey,`${RedisKeys.UserRoomId}:${userId}`, roomId);
+            await this.redisClient.hSet(agentKey,`${RedisKeys.AgentRoomId}:${agentId}`, roomId);
             return roomId
         } catch (e) {
             console.log(e)
+            return null;
         }
 
     }
 
     async getUserRoom(id: string, type: RedisKeys) {
-        try {
-            const roomId = await this.redisClient.get(`${type}:${id}`);
-            console.log("getUserRoom",{roomId,KEY:`${type}:${id}`})
-            if (!roomId){
-                return null
+            try {
+                const factory = new RoomHandlerFactory(this.redisClient);
+                const handler = factory.getHandler(type);
+                return await handler.getRoomData(id);
+            } catch (e) {
+                console.error(e);
+                return null;
             }
-            let agentSocketId = ""
-            if (type == RedisKeys.UserRoomId) {
-                const agentId = roomId.split("-")[1]
-                const agentKey = `${RedisKeys.Agent}:${agentId}`;
-                agentSocketId = await this.redisClient.hGet(agentKey, RedisKeys.AgentSocketId)
-            }else{
-                const userId = roomId.split("-")[0]
-                const userKey = `${RedisKeys.User}:${userId}`;
-                agentSocketId = await this.redisClient.hGet(userKey, RedisKeys.AgentSocketId)
-            }
-            return {
-                agentSocketId, roomId
-            };
-        } catch (e) {
-            console.log(e)
-        }
+
+
+
+            //try
+        //     const keyRoomId=type==RedisKeys.User?RedisKeys.UserRoomId : RedisKeys.AgentRoomId
+        //     const roomId = await this.redisClient.hGet(`${type}:${id}`,`${keyRoomId}:${id}`);
+        //     console.log("getUserRoom",{roomId,KEY:`${type}:${id}`})
+        //     if (!roomId){
+        //         return null
+        //     }
+        //     let agentSocketId = ""
+        //     if (type == RedisKeys.UserRoomId) {
+        //         const agentId = roomId.split("-")[1]
+        //         const agentKey = `${RedisKeys.Agent}:${agentId}`;
+        //         agentSocketId = await this.redisClient.hGet(agentKey, RedisKeys.AgentSocketId)
+        //     }else{
+        //         const userId = roomId.split("-")[0]
+        //         const userKey = `${RedisKeys.User}:${userId}`;
+        //         agentSocketId = await this.redisClient.hGet(userKey, RedisKeys.AgentSocketId)
+        //     }
+        //     return {
+        //         agentSocketId, roomId
+        //     };
+        // } catch (e) {
+        //     console.log(e)
+        // }
     }
 }

@@ -1,19 +1,18 @@
-import {Injectable} from '@nestjs/common';
-import {DatabaseService} from "../../../config/database.config";
+import {Inject, Injectable} from '@nestjs/common';
 import {SendMessageDto} from "../dto/sendMessage.dto";
 import {MessageService} from "./message.service";
 import {AgentRoomsService} from "./agent-rooms.service";
 import {RedisKeys} from "../consts/redis-keys";
+import {Db} from "mongodb";
 
 @Injectable()
 export class ChatbotService {
 
-    constructor(private dbService: DatabaseService,private messageService:MessageService,private agentRoomsService:AgentRoomsService) {
+    constructor(@Inject('MONGO_CLIENT') private readonly dbService: Db,private messageService:MessageService,private agentRoomsService:AgentRoomsService) {
     }
 
     async processMessage(message: SendMessageDto, clientSocketId: string): Promise<any> {
-        const db = this.dbService.getDatabase();
-        const faqCollection = db.collection('faq');
+        const faqCollection = this.dbService.collection('faq');
 
         await this.messageService.queueMessage({message: message.text,receiverId:"",senderId:message.clientId,timestamp:new Date()})
 

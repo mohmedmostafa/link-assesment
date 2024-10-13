@@ -34,8 +34,5 @@ export class ChatbotGateway {
             this.globalWebSocketGateway.emit('message', {message: response.answer}, client);
         }
 
-        // client.on('disconnecting', (reason) => {
-        //     console.log(`DISCONNECTING: ${Array.from(client.rooms)}`); // Set { ... }
-        // });
     }
 }

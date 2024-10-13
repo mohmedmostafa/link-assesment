@@ -5,7 +5,4 @@ export enum RedisKeys {
     AgentRoomId = "AgentRoomId",
     UserRoomId="UserRoomId",
     AgentSocketId="agentSocketId",
-    Room="Room",
-    UserId="UserId",
-    AgentId="AgentId"
 }
